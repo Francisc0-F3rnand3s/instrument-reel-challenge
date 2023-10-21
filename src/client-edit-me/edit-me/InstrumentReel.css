@@ -34,10 +34,11 @@
 .instrument {
   list-style: none;
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
+  align-items: center;
   gap: 5px;
   padding: 10px;
-  width: 250px;
+  width: 300px;
   border: 1px solid var(--border-color);
   border-left: 0;
   background-color: #1d222c;
@@ -47,4 +48,10 @@
   &:hover {
     background-color: #282d39;
   }
+}
+
+.logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 100%;
 }

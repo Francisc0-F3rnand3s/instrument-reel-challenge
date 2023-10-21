@@ -63,7 +63,7 @@ function InstrumentReel({ instrumentSymbols }: InstrumentReelProps) {
   const getChangeColor = (percentage: number) => {
     if(percentage < 0) return 'percentageDown';
     if(percentage > 0) return 'percentageUp';
-    return ''
+    return '';
   }
 
   const getInstrumentElements = (isHidden: boolean = false) => {
@@ -71,6 +71,7 @@ function InstrumentReel({ instrumentSymbols }: InstrumentReelProps) {
       const valueChangeColor = getChangeColor(value.percentageChange);
       return (
         <li className='instrument' aria-hidden={isHidden} key={value.code}>
+          <img src={`/${value.category}/${value.code}.svg`} alt={`${value.code} logo`} className='logo' />
           <p>{value.name}</p>
           <p className={valueChangeColor}>{value.lastQuote}</p>
           <p className={valueChangeColor}>{`${value.percentageChange > 0 ? '+' : '-'} ${Math.abs(value.percentageChange ).toFixed(3)}%`}</p>
@@ -92,6 +93,8 @@ function InstrumentReel({ instrumentSymbols }: InstrumentReelProps) {
       window.removeEventListener("resize", handleIsOverflow);
     };
   }, [instrumentsContainer.current]);
+
+  if(!instruments) return <p>Loading...</p>
 
   return (
   <div className='instruments' ref={instrumentsContainer}>

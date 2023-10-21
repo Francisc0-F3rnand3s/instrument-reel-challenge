@@ -5,14 +5,17 @@
 /**
  * ✅ You can add/edit these imports
  */
-import { InstrumentSymbol } from "../../common-leave-me";
+import { useEffect, useState, useCallback } from 'react';
+import { InstrumentSymbol, Instrument } from "../../common-leave-me";
 import { InstrumentSocketClient } from "./InstrumentSocketClient";
-import "./InstrumentReel.css";
+import './InstrumentReel.css';
 
 /**
  * ❌ Please do not edit this
  */
 const client = new InstrumentSocketClient();
+
+type InstrumentWithPercentageChange = Instrument & { percentageChange: number }
 
 /**
  * ❌ Please do not edit this hook name & args
@@ -21,6 +24,22 @@ function useInstruments(instrumentSymbols: InstrumentSymbol[]) {
   /**
    * ✅ You can edit inside the body of this hook
    */
+  const [instrumentsData, setInstrumentData] = useState<InstrumentWithPercentageChange[]>()
+
+  const subscribeCallback = useCallback((data: Instrument[]) => {
+    setInstrumentData((prev) => {
+      const getPercentageChange = (instrument: Instrument) => {
+        const prevQuote = prev?.find(({code}) => code === instrument.code)?.lastQuote ?? instrument.lastQuote;
+        return ((instrument.lastQuote - prevQuote) / prevQuote) * 100;
+      }
+
+      return data.map((instrument) => ({...instrument, percentageChange: getPercentageChange(instrument)}))
+    })
+  }, [])
+
+  useEffect(() => client.subscribe(instrumentSymbols, subscribeCallback), [])
+
+  return instrumentsData
 }
 
 export interface InstrumentReelProps {

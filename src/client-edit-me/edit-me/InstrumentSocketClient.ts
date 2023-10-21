@@ -37,6 +37,9 @@ import {
     };
  */
 
+type InstrumentSubscriber = (data: Instrument[]) => void
+type MessageHandler = (event: MessageEvent) => void
+
 /**
  * ❌ Please do not edit this class name
  */
@@ -45,6 +48,7 @@ export class InstrumentSocketClient {
    * ❌ Please do not edit this private property name
    */
   private _socket: WebSocket;
+  private _instrumentSubscriptions = new Map<MessageHandler, {instrumentSymbols: InstrumentSymbol[]}>();
 
   /**
    * ✅ You can add more properties for the class here (if you want) 👇
@@ -59,5 +63,61 @@ export class InstrumentSocketClient {
     /**
      * ✅ You can edit from here down 👇
      */
+    this._socket.onerror = () => this._socket.close()
+  }
+
+  private parseEventMessage(event: MessageEvent) {
+    try {
+      return JSON.parse(event.data) as WebSocketServerMessageJson
+    } catch (e) {
+      console.error('Cannot parse server message', e)
+    }
+  }
+
+  private handleMessageSubAndUnsub(instrumentSymbols: InstrumentSymbol[], instrumentSub: InstrumentSubscriber )  {
+    const handleMessageEvent = (event: MessageEvent) => {
+      const data = this.parseEventMessage(event)
+      if(!data) return;
+      instrumentSub(data.instruments.filter(instrument => instrumentSymbols.includes(instrument.code)))
+    }
+
+    this._instrumentSubscriptions.set(handleMessageEvent, {instrumentSymbols})
+    this._socket.addEventListener('message', handleMessageEvent)
+    
+    return () => {
+      this._socket.removeEventListener('message', handleMessageEvent)
+      this._instrumentSubscriptions.delete(handleMessageEvent) 
+
+      // For this code to work, the code on line 78 in App.tsx needs modification
+      // const subcribedSymbols = [...this._instrumentSubscriptions.values()].flatMap(({instrumentSymbols}) => instrumentSymbols)
+      // const symbolsToUnsubscribe = instrumentSymbols.filter((sym) => !subcribedSymbols.includes(sym))
+      // if(symbolsToUnsubscribe.length && this._socket.readyState === 1) {
+      //   this._socket.send(JSON.stringify({
+      //     type: 'unsubscribe',
+      //     instrumentSymbols: symbolsToUnsubscribe
+      //   }))
+      // }
+    }
+  }
+
+  subscribe(instrumentSymbols: InstrumentSymbol[], instrumentSub: InstrumentSubscriber ) {
+    const socketInstrumentSubscribe = () => {
+      this._socket.send(JSON.stringify({
+        type: "subscribe",
+        instrumentSymbols: instrumentSymbols
+      }))
+    }
+
+    if(this._socket.readyState !== 1) {
+      this._socket.addEventListener('open', () => {
+        socketInstrumentSubscribe()
+        this._socket.removeEventListener('open', socketInstrumentSubscribe)
+      })
+    } else {
+      socketInstrumentSubscribe()
+    };
+
+
+    return this.handleMessageSubAndUnsub(instrumentSymbols, instrumentSub)
   }
 }

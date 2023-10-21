@@ -1,3 +1,50 @@
-/**
- * ✅ You can edit this file to add your own styles.
- */
+@keyframes slide {
+  to {
+    transform: translate(-50%);
+  }
+}
+
+.percentageDown {
+  color: red;
+}
+
+.percentageUp {
+  color: green;
+}
+
+.instruments {
+  display: flex;  
+  overflow: hidden;
+}
+
+.slider {
+  display: flex;
+  flex-wrap: nowrap;
+  margin-left: 0;
+  padding-left: 0;
+}
+
+.animate {
+  animation: slide 20s linear infinite;
+  &:hover {
+    animation-play-state: paused;
+  }
+}
+
+.instrument {
+  list-style: none;
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  padding: 10px;
+  width: 250px;
+  border: 1px solid var(--border-color);
+  border-left: 0;
+  background-color: #1d222c;
+  &:first-child {
+    border-left: 1px solid var(--border-color);
+  }
+  &:hover {
+    background-color: #282d39;
+  }
+}

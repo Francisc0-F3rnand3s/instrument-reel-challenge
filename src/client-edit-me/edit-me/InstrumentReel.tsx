@@ -5,7 +5,7 @@
 /**
  * ✅ You can add/edit these imports
  */
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { InstrumentSymbol, Instrument } from "../../common-leave-me";
 import { InstrumentSocketClient } from "./InstrumentSocketClient";
 import './InstrumentReel.css';
@@ -56,8 +56,51 @@ function InstrumentReel({ instrumentSymbols }: InstrumentReelProps) {
    * ✅ You can edit from here down in this component.
    * Please feel free to add more components to this file or other files if you want to.
    */
+  const instrumentsContainer = useRef<HTMLDivElement>(null)
+  const [isOverflowing, setIsOverflowing] = useState(false)
 
-  return <div>Instrument Reel</div>;
+
+  const getChangeColor = (percentage: number) => {
+    if(percentage < 0) return 'percentageDown';
+    if(percentage > 0) return 'percentageUp';
+    return ''
+  }
+
+  const getInstrumentElements = (isHidden: boolean = false) => {
+    return instruments?.map((value) => {
+      const valueChangeColor = getChangeColor(value.percentageChange);
+      return (
+        <li className='instrument' aria-hidden={isHidden} key={value.code}>
+          <p>{value.name}</p>
+          <p className={valueChangeColor}>{value.lastQuote}</p>
+          <p className={valueChangeColor}>{`${value.percentageChange > 0 ? '+' : '-'} ${Math.abs(value.percentageChange ).toFixed(3)}%`}</p>
+        </li>
+      )
+    })
+  }
+
+  useEffect(() => {
+    const handleIsOverflow = () => {
+      setIsOverflowing((instrumentsContainer.current?.clientWidth ?? 0) < (instrumentsContainer.current?.scrollWidth ?? 0));
+    };
+
+    handleIsOverflow();
+
+    window.addEventListener("resize", handleIsOverflow);
+
+    return () => {
+      window.removeEventListener("resize", handleIsOverflow);
+    };
+  }, [instrumentsContainer.current]);
+
+  return (
+  <div className='instruments' ref={instrumentsContainer}>
+    <ul className={isOverflowing ? 'slider animate' : 'slider'}>
+      {getInstrumentElements() }
+      {isOverflowing ? getInstrumentElements(true) : null}
+    </ul>
+  </div>
+  )
 }
 
 export default InstrumentReel;
